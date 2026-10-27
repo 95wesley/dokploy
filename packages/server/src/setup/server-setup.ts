@@ -230,9 +230,6 @@ ${installRClone()}
 echo -e "4. Installing Docker. "
 ${installDocker()}
 
-echo -e "4.5. Installing Tailscale (optional for cluster networking). "
-${installTailscale()}
-
 echo -e "5. Setting up Docker Swarm"
 ${setupSwarm()}
 
@@ -753,46 +750,6 @@ export const installRClone = () => `
 		curl https://rclone.org/install.sh | $SUDO_CMD bash
 		RCLONE_VERSION=$(rclone --version | head -n 1 | awk '{print $2}' | sed 's/^v//')
 		echo "RClone version $RCLONE_VERSION installed ✅"
-	fi
-`;
-
-export const installTailscale = () => `
-	if command_exists tailscale; then
-		echo "Tailscale already installed ✅"
-		TAILSCALE_IP=\$(tailscale ip -4 2>/dev/null || echo "")
-		if [ -z "\$TAILSCALE_IP" ]; then
-			echo "Tailscale installed but not connected. Run: tailscale up"
-		else
-			echo "Tailscale IP: \$TAILSCALE_IP ✅"
-		fi
-	else
-		# Install Tailscale
-		case "$OS_TYPE" in
-			ubuntu|debian|raspbian)
-				$SUDO_CMD apt-get update >/dev/null 2>&1
-				$SUDO_CMD apt-get install -y curl gnupg >/dev/null 2>&1
-				curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/\$(lsb_release -cs).gpg | $SUDO_CMD apt-key add - >/dev/null 2>&1
-				curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/\$(lsb_release -cs).list | $SUDO_CMD tee /etc/apt/sources.list.d/tailscale.list >/dev/null 2>&1
-				$SUDO_CMD apt-get update >/dev/null 2>&1
-				$SUDO_CMD apt-get install -y tailscale >/dev/null 2>&1
-				;;
-			centos|rhel|fedora|rocky|almalinux|ol)
-				$SUDO_CMD dnf install -y tailscale >/dev/null 2>&1 || $SUDO_CMD yum install -y tailscale >/dev/null 2>&1
-				;;
-			arch|archarm)
-				$SUDO_CMD pacman -Sy tailscale --noconfirm >/dev/null 2>&1
-				;;
-			alpine)
-				$SUDO_CMD apk add tailscale >/dev/null 2>&1
-				;;
-			sles|opensuse-leap|opensuse-tumbleweed)
-				$SUDO_CMD zypper install -y tailscale >/dev/null 2>&1
-				;;
-		esac
-
-		TAILSCALE_VERSION=\$(tailscale version | head -n 1)
-		echo "Tailscale version \$TAILSCALE_VERSION installed ✅"
-		echo "⚠️  Tailscale installed. You need to authenticate: tailscale up --hostname=dokploy-\$RANDOM"
 	fi
 `;
 

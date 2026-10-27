@@ -135,7 +135,6 @@ export * from "./utils/process/execAsync";
 export * from "./utils/process/remoteStream";
 export * from "./utils/process/spawnAsync";
 export * from "./utils/replication/setup-replication";
-export * from "./utils/tailscale/index";
 export * from "./utils/providers/bitbucket";
 export * from "./utils/providers/docker";
 export * from "./utils/providers/git";

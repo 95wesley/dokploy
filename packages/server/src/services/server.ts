@@ -307,38 +307,3 @@ export const getAccessibleServerIds = async (session: {
 
 	return new Set(memberRecord?.accessedServers ?? []);
 };
-
-export const detectAndSaveTailscaleIp = async (
-	serverId: string,
-	onData?: (msg: string) => void,
-): Promise<string | null> => {
-	try {
-		const { detectTailscaleIp } = await import(
-			"@dokploy/server/utils/tailscale"
-		);
-
-		onData?.(
-			`Attempting to detect Tailscale IP for server ${serverId}...`,
-		);
-		const tailscaleIp = await detectTailscaleIp(serverId, onData);
-
-		if (tailscaleIp) {
-			// Save to database
-			await updateServerById(serverId, {
-				tailscaleIp,
-			});
-			onData?.(`Tailscale IP ${tailscaleIp} saved to database ✅`);
-			return tailscaleIp;
-		}
-
-		onData?.(
-			`Tailscale not connected. You can authenticate later with: tailscale up`,
-		);
-		return null;
-	} catch (error) {
-		onData?.(
-			`Error detecting Tailscale IP: ${error instanceof Error ? error.message : String(error)}`,
-		);
-		return null;
-	}
-};

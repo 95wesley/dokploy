@@ -1,4 +1,5 @@
 import { execAsyncRemote } from "@dokploy/server/utils/process/execAsync";
+import { findServerById } from "@dokploy/server/services/server";
 import type { z } from "zod";
 import type {
 	apiSwitchoverServicePrimary,
@@ -7,7 +8,7 @@ import type {
 
 export async function setupPostgresReplication(
 	primaryServerId: string,
-	primaryTailscaleIp: string,
+	primaryIpAddress: string,
 	replicaServerId: string,
 	databaseUser: string,
 	databaseName: string,
@@ -23,13 +24,13 @@ export async function setupPostgresReplication(
 
 	await execAsyncRemote(
 		replicaServerId,
-		`pg_basebackup -h ${primaryTailscaleIp} -U ${databaseUser} -D /var/lib/postgresql/data -Pv -W`,
+		`pg_basebackup -h ${primaryIpAddress} -U ${databaseUser} -D /var/lib/postgresql/data -Pv -W`,
 		onData,
 	);
 
 	await execAsyncRemote(
 		replicaServerId,
-		`echo "primary_conninfo = 'host=${primaryTailscaleIp} user=${databaseUser} password=<password> dbname=${databaseName}'" >> /var/lib/postgresql/data/postgresql.conf`,
+		`echo "primary_conninfo = 'host=${primaryIpAddress} user=${databaseUser} password=<password> dbname=${databaseName}'" >> /var/lib/postgresql/data/postgresql.conf`,
 		onData,
 	);
 
@@ -38,7 +39,7 @@ export async function setupPostgresReplication(
 
 export async function setupMysqlReplication(
 	primaryServerId: string,
-	primaryTailscaleIp: string,
+	primaryIpAddress: string,
 	replicaServerId: string,
 	rootPassword: string,
 	onData?: (msg: string) => void,
@@ -59,7 +60,7 @@ export async function setupMysqlReplication(
 
 	await execAsyncRemote(
 		replicaServerId,
-		`docker exec dokploy-mysql mysql -uroot -p${rootPassword} -e "CHANGE MASTER TO MASTER_HOST='${primaryTailscaleIp}', MASTER_USER='replication', MASTER_PASSWORD='replication_password', MASTER_LOG_FILE='mysql-bin.000001', MASTER_LOG_POS=154; START SLAVE;"`,
+		`docker exec dokploy-mysql mysql -uroot -p${rootPassword} -e "CHANGE MASTER TO MASTER_HOST='${primaryIpAddress}', MASTER_USER='replication', MASTER_PASSWORD='replication_password', MASTER_LOG_FILE='mysql-bin.000001', MASTER_LOG_POS=154; START SLAVE;"`,
 		onData,
 	);
 
@@ -68,7 +69,7 @@ export async function setupMysqlReplication(
 
 export async function setupRedisReplication(
 	primaryServerId: string,
-	primaryTailscaleIp: string,
+	primaryIpAddress: string,
 	replicaServerId: string,
 	onData?: (msg: string) => void,
 ) {
@@ -76,7 +77,7 @@ export async function setupRedisReplication(
 
 	await execAsyncRemote(
 		replicaServerId,
-		`docker exec dokploy-redis redis-cli SLAVEOF ${primaryTailscaleIp} 6379`,
+		`docker exec dokploy-redis redis-cli SLAVEOF ${primaryIpAddress} 6379`,
 		onData,
 	);
 
@@ -130,7 +131,7 @@ export async function promoteRedisReplica(
 
 export async function demoteMasterToReplica(
 	oldMasterServerId: string,
-	newMasterTailscaleIp: string,
+	newMasterIpAddress: string,
 	serviceType: string,
 	onData?: (msg: string) => void,
 ) {
@@ -141,19 +142,19 @@ export async function demoteMasterToReplica(
 	if (serviceType === "postgres") {
 		await execAsyncRemote(
 			oldMasterServerId,
-			`echo "primary_conninfo = 'host=${newMasterTailscaleIp}'" >> /var/lib/postgresql/data/postgresql.conf`,
+			`echo "primary_conninfo = 'host=${newMasterIpAddress}'" >> /var/lib/postgresql/data/postgresql.conf`,
 			onData,
 		);
 	} else if (serviceType === "mysql" || serviceType === "mariadb") {
 		await execAsyncRemote(
 			oldMasterServerId,
-			`docker exec dokploy-mysql mysql -e "CHANGE MASTER TO MASTER_HOST='${newMasterTailscaleIp}', MASTER_USER='replication', MASTER_PASSWORD='replication_password'; START SLAVE;"`,
+			`docker exec dokploy-mysql mysql -e "CHANGE MASTER TO MASTER_HOST='${newMasterIpAddress}', MASTER_USER='replication', MASTER_PASSWORD='replication_password'; START SLAVE;"`,
 			onData,
 		);
 	} else if (serviceType === "redis") {
 		await execAsyncRemote(
 			oldMasterServerId,
-			`docker exec dokploy-redis redis-cli SLAVEOF ${newMasterTailscaleIp} 6379`,
+			`docker exec dokploy-redis redis-cli SLAVEOF ${newMasterIpAddress} 6379`,
 			onData,
 		);
 	}

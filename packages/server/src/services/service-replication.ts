@@ -93,8 +93,6 @@ async function setupPostgresReplicationIfNeeded(
 	}
 
 	const primaryServer = await findServerById(primaryServerId);
-	const primaryTailscaleIp =
-		primaryServer.tailscaleIp || primaryServer.ipAddress;
 
 	// Get postgres details from DB
 	const postgres = await db.query.postgres.findFirst({
@@ -112,7 +110,7 @@ async function setupPostgresReplicationIfNeeded(
 		try {
 			await setupPostgresReplication(
 				primaryServerId,
-				primaryTailscaleIp,
+				primaryServer.ipAddress,
 				replicaServerId,
 				postgres.databaseUser,
 				postgres.databaseName,
@@ -137,8 +135,6 @@ async function setupMysqlReplicationIfNeeded(
 	}
 
 	const primaryServer = await findServerById(primaryServerId);
-	const primaryTailscaleIp =
-		primaryServer.tailscaleIp || primaryServer.ipAddress;
 
 	// Get mysql details from DB
 	const mysql = await db.query.mysql.findFirst({
@@ -156,7 +152,7 @@ async function setupMysqlReplicationIfNeeded(
 		try {
 			await setupMysqlReplication(
 				primaryServerId,
-				primaryTailscaleIp,
+				primaryServer.ipAddress,
 				replicaServerId,
 				mysql.databasePassword,
 				onData,
@@ -180,8 +176,6 @@ async function setupRedisReplicationIfNeeded(
 	}
 
 	const primaryServer = await findServerById(primaryServerId);
-	const primaryTailscaleIp =
-		primaryServer.tailscaleIp || primaryServer.ipAddress;
 
 	for (const replicaServerId of replicaServerIds) {
 		onData?.(
@@ -190,7 +184,7 @@ async function setupRedisReplicationIfNeeded(
 		try {
 			await setupRedisReplication(
 				primaryServerId,
-				primaryTailscaleIp,
+				primaryServer.ipAddress,
 				replicaServerId,
 				onData,
 			);

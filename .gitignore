@@ -45,5 +45,12 @@ yarn-error.log*
 
 .db
 
+# Redis
+dump.rdb
+
+# Local dev
+start_dev.sh
+.env
+
 .playwright-*
 .credentials

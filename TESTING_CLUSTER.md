@@ -3,50 +3,41 @@
 ## Quick Start (Local Development)
 
 ### Prerequisites
-- Node 24+
+- Node 26+
 - pnpm 10.22+
-- PostgreSQL 16+
-- Redis 7+
-- Podman 6+ (or Docker)
+- PostgreSQL 16+ (via Homebrew)
+- Redis 7+ (via Homebrew)
 
-### Option 1: Local Development (No Docker)
+### Installation
 
 ```bash
-# 1. Install dependencies
+# Install dependencies
 pnpm install
 
-# 2. Setup PostgreSQL
-createdb dokploy
-psql dokploy < setup.sql  # If available
-
-# 3. Setup Redis
-redis-server
-
-# 4. Run database migrations
-pnpm -F @dokploy/server run migrate
-
-# 5. Start development server
-pnpm dev
+# Install PostgreSQL and Redis via Homebrew
+brew install postgresql@16 redis
 ```
 
-**URL**: http://localhost:3000
-
-### Option 2: With Docker Compose (Recommended)
+### Start Development
 
 ```bash
-# 1. Build and start all services
-podman-compose -f docker-compose.test.yml up -d
+# Make script executable (first time only)
+chmod +x start_dev.sh
 
-# Wait for services to be ready (~30s)
-podman-compose -f docker-compose.test.yml logs -f dokploy
-
-# Stop services
-podman-compose -f docker-compose.test.yml down
+# Run everything with one command
+./start_dev.sh
 ```
 
 **URL**: http://localhost:3000  
-**Database**: postgresql://dokploy:dokploy123@localhost:5432/dokploy  
+**Database**: postgresql://postgres:postgres@localhost:5432/dokploy  
 **Redis**: redis://localhost:6379
+
+The script will:
+1. ✅ Start PostgreSQL via `brew services`
+2. ✅ Start Redis via `brew services`
+3. ✅ Create the `dokploy` database
+4. ✅ Run migrations automatically
+5. ✅ Start the development server at http://localhost:3000
 
 ---
 
@@ -185,6 +176,20 @@ tailscale up --hostname=dokploy-vps-1
 - Check server status: Dashboard → Cluster
 - Redeploy service: Application → Redeploy
 - View logs: Docker logs on each server
+
+---
+
+## Stopping Services
+
+To stop the development server and services:
+
+```bash
+# Stop just the dev server (Ctrl+C in terminal running ./start_dev.sh)
+
+# Stop all services
+brew services stop postgresql@16
+brew services stop redis
+```
 
 ---
 
