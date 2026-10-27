@@ -39,14 +39,16 @@ export const createMultipleServiceServers = async (
 export const updateServiceServerStatus = async (
 	input: z.infer<typeof apiUpdateServiceServerStatus>,
 ) => {
+	const updateData: Record<string, any> = {
+		replicationError: input.replicationError,
+	};
+	if (input.replicationStatus) {
+		updateData.replicationStatus = input.replicationStatus;
+	}
 	return await db
 		.update(serviceServers)
-		.set({
-			replicationStatus: input.replicationStatus,
-			replicationError: input.replicationError,
-			updatedAt: new Date(),
-		})
-		.where(eq(serviceServers.id, input.id))
+		.set(updateData)
+		.where(eq(serviceServers.id, input.id as any))
 		.returning();
 };
 
@@ -58,7 +60,6 @@ export const updateServiceServerPrimary = async (
 		.update(serviceServers)
 		.set({
 			isPrimary,
-			updatedAt: new Date(),
 		})
 		.where(eq(serviceServers.id, id))
 		.returning();
@@ -106,7 +107,6 @@ export const switchoverServicePrimary = async (
 		.update(serviceServers)
 		.set({
 			isPrimary: false,
-			updatedAt: new Date(),
 		})
 		.where(eq(serviceServers.id, oldPrimaryId));
 
@@ -115,7 +115,6 @@ export const switchoverServicePrimary = async (
 		.update(serviceServers)
 		.set({
 			isPrimary: true,
-			updatedAt: new Date(),
 		})
 		.where(eq(serviceServers.id, newPrimaryId))
 		.returning();

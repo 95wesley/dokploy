@@ -3,7 +3,7 @@ ALTER TABLE "server" ADD COLUMN "tailscaleIp" text;
 ALTER TABLE "server" ADD COLUMN "isPrimary" boolean NOT NULL DEFAULT false;
 
 -- Create serviceServers junction table for multi-server replication
-CREATE TYPE "public"."serviceType" AS ENUM('application', 'compose', 'postgres', 'mysql', 'mariadb', 'mongo', 'redis', 'libsql');
+CREATE TYPE "public"."replicationServiceType" AS ENUM('application', 'compose', 'postgres', 'mysql', 'mariadb', 'mongo', 'redis', 'libsql');
 CREATE TYPE "public"."replicationStatus" AS ENUM('synced', 'syncing', 'error', 'pending');
 
 CREATE TABLE IF NOT EXISTS "public"."serviceServers" (

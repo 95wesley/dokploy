@@ -45,10 +45,14 @@ describe("ExecutionModeSelector", () => {
 		});
 
 		it("should require primary in replicated mode", () => {
-			const selectedServers = ["vps-1", "vps-2"]; // vps-1 is primary
-			const hasPrimary = selectedServers.includes("vps-1");
+			const servers = [
+				{ id: "vps-1", name: "Primary", isPrimary: true },
+				{ id: "vps-2", name: "Replica", isPrimary: false },
+			];
+			const selectedServers = ["vps-1", "vps-2"];
+			const primaryServer = servers.find((s) => selectedServers.includes(s.id) && s.isPrimary);
 
-			expect(hasPrimary).toBe(true);
+			expect(primaryServer).toBeDefined();
 		});
 	});
 
@@ -96,7 +100,10 @@ describe("ExecutionModeSelector", () => {
 
 			// Change mode
 			mode = "single";
-			selectedServers = [selectedServers[0]]; // Keep only first
+			const firstServer = selectedServers[0];
+			if (firstServer) {
+				selectedServers = [firstServer]; // Keep only first
+			}
 
 			expect(mode).toBe("single");
 			expect(selectedServers).toHaveLength(1);

@@ -11,7 +11,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { server } from "./server";
 
-export const serviceType = pgEnum("serviceType", [
+export const replicationServiceType = pgEnum("replicationServiceType", [
 	"application",
 	"compose",
 	"postgres",
@@ -35,7 +35,7 @@ export const serviceServers = pgTable("serviceServers", {
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
 	serviceId: text("serviceId").notNull(),
-	serviceType: serviceType("serviceType").notNull(),
+	serviceType: replicationServiceType("serviceType").notNull(),
 	serverId: text("serverId")
 		.notNull()
 		.references(() => server.serverId, { onDelete: "cascade" }),

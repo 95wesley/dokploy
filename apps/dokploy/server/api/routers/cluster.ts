@@ -155,7 +155,7 @@ export const clusterRouter = createTRPCRouter({
 			};
 		}),
 
-	switchoverPrimary: withPermission("server", "update")
+	switchoverPrimary: withPermission("server", "create")
 		.input(apiSwitchoverServicePrimary)
 		.mutation(async ({ input, ctx }) => {
 			try {

@@ -5,8 +5,8 @@
 	"prevId": "0198_nostalgic_mongoose",
 	"tables": {},
 	"enums": {
-		"public.serviceType": {
-			"name": "serviceType",
+		"public.replicationServiceType": {
+			"name": "replicationServiceType",
 			"schema": "public",
 			"values": ["application", "compose", "postgres", "mysql", "mariadb", "mongo", "redis", "libsql"]
 		},
