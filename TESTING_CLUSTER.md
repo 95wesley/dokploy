@@ -70,16 +70,7 @@ Login with default credentials (check `.env` or setup wizard)
 - Username: `root`
 - SSH Key: (select or create)
 
-### 3. Setup Tailscale (Optional)
-
-**Settings → Servers → [test-vps-1] → Enable Tailscale**
-
-This will:
-- Install Tailscale on the server
-- Detect Tailscale IP (100.x.x.x)
-- Use it for private cluster communication
-
-### 4. Create a PostgreSQL Database with Replication
+### 3. Create a PostgreSQL Database with Replication
 
 **Dashboard → Project → Environment → Databases → Add PostgreSQL**
 
@@ -94,7 +85,7 @@ This will:
 
 **Click "Create Database"**
 
-### 5. Monitor Replication Status
+### 4. Monitor Replication Status
 
 **Dashboard → Cluster → Servers**
 
@@ -111,7 +102,7 @@ test-vps-2 (Replica)
   └─ Last sync: 2025-10-26 15:30:42
 ```
 
-### 6. Test Manual Failover
+### 5. Test Manual Failover
 
 **Dashboard → Cluster → Servers → "Switch Primary Server"**
 
@@ -125,7 +116,7 @@ test-vps-2 (Replica)
 - All applications redirect to new primary
 - DNS points to new primary IP
 
-### 7. Test Application Replication
+### 6. Test Application Replication
 
 **Dashboard → Project → Environment → Applications → Add Application**
 
@@ -153,23 +144,14 @@ test-vps-2 (Replica)
 - [ ] New primary serves all requests
 - [ ] Applications run on both servers
 - [ ] No data loss during failover
-- [ ] Tailscale IP visible in server settings (if enabled)
 
 ---
 
 ## Troubleshooting
 
-### "Tailscale not connected"
-```bash
-# On the VPS, authenticate:
-ssh root@192.168.1.100
-tailscale up --hostname=dokploy-vps-1
-```
-
 ### "Replication Error: Connection timeout"
 - Verify SSH key is correct
 - Check firewall allows ports 3306 (MySQL), 5432 (Postgres)
-- Ensure Tailscale is connected on both servers
 - Check server health in Dashboard
 
 ### "Services not syncing"
@@ -207,16 +189,14 @@ brew services stop redis
 │  Test VPS 1 (Primary: 192.168.1.100)│
 │  ├─ Docker Swarm                    │
 │  ├─ PostgreSQL Master               │
-│  ├─ Services (replicated)           │
-│  └─ Tailscale (100.x.x.x)           │
+│  └─ Services (replicated)           │
 └─────────────────────────────────────┘
          ↓ (Master-Slave)
 ┌─────────────────────────────────────┐
 │  Test VPS 2 (Replica: 192.168.1.101)│
 │  ├─ Docker Swarm                    │
 │  ├─ PostgreSQL Slave                │
-│  ├─ Services (replicated)           │
-│  └─ Tailscale (100.x.x.x)           │
+│  └─ Services (replicated)           │
 └─────────────────────────────────────┘
 ```
 
@@ -227,13 +207,12 @@ brew services stop redis
 **Branch**: `feature/cluster-replication-simple`
 
 **Key Files Modified:**
-- `packages/server/src/db/schema/server.ts` - Added `tailscaleIp`, `isPrimary`
-- `packages/server/src/db/schema/service-servers.ts` - New junction table
-- `packages/server/src/utils/replication/setup-replication.ts` - Replication logic
-- `packages/server/src/utils/tailscale/index.ts` - Tailscale utilities
+- `packages/server/src/db/schema/server.ts` - Server schema with SSH configuration
+- `packages/server/src/db/schema/service-servers.ts` - Junction table for replication
+- `packages/server/src/utils/replication/setup-replication.ts` - Replication logic via SSH
 - `apps/dokploy/components/dashboard/cluster/` - UI components
 - `apps/dokploy/server/api/routers/cluster.ts` - API endpoints
-- `CLUSTER_SETUP.md` - Complete setup guide
+- `CLUSTER_CONFIG.md` - Complete setup guide
 
 ---
 

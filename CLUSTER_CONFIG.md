@@ -1,30 +1,30 @@
-# 🚀 Configuração de Cluster no Dokploy
+# 🚀 Dokploy Cluster Configuration
 
-## 1. Adicionar Servidores
+## 1. Add Servers
 
 ### Via UI:
 ```
 Settings → Servers → Add Server
 ```
 
-**Dados necessários:**
-- **Name**: Nome único (ex: `vps-1`, `vps-2`)
-- **IP Address**: IP do VPS ou hostname (ex: `192.168.1.100` ou `vps1.example.com`)
+**Required data:**
+- **Name**: Unique name (e.g., `vps-1`, `vps-2`)
+- **IP Address**: VPS IP or hostname (e.g., `192.168.1.100` or `vps1.example.com`)
 - **Port**: 22 (SSH)
 - **Username**: `root`
-- **SSH Key**: Selecione ou crie uma
+- **SSH Key**: Select or create one
 
-**Marque como Primário:**
-- ✅ `Mark as Primary Server` (apenas 1 servidor)
+**Mark as Primary:**
+- ✅ `Mark as Primary Server` (only 1 server)
 
 ---
 
-## 2. Criar Serviço com Replicação
+## 2. Create Replicated Service
 
-### Exemplo: Banco de Dados PostgreSQL
+### Example: PostgreSQL Database
 
 ```
-Dashboard → [Projeto] → Databases → Add PostgreSQL
+Dashboard → [Project] → Databases → Add PostgreSQL
 ```
 
 **Setup:**
@@ -33,22 +33,22 @@ Dashboard → [Projeto] → Databases → Add PostgreSQL
 - **Password**: `strong-password`
 - **Execution Mode**: ⭕ **Replicated**
 
-**Selecione Servidores:**
-- ✅ `vps-1` (Primário/Master)
-- ✅ `vps-2` (Secundário/Slave)
-- ✅ `vps-3` (Secundário/Slave - opcional)
+**Select Servers:**
+- ✅ `vps-1` (Primary/Master)
+- ✅ `vps-2` (Secondary/Slave)
+- ✅ `vps-3` (Secondary/Slave - optional)
 
 **Click: Create Database**
 
 ---
 
-## 3. Monitorar Replicação
+## 3. Monitor Replication
 
 ```
 Dashboard → Cluster → Servers
 ```
 
-Você verá:
+You will see:
 ```
 ┌─ vps-1 (PRIMARY)
 │  ├─ PostgreSQL: ✅ Synced (Master)
@@ -66,28 +66,28 @@ Você verá:
 
 ---
 
-## 4. Failover (Trocar Primário)
+## 4. Failover (Switch Primary)
 
 ```
 Dashboard → Cluster → Servers → "Switch Primary"
 ```
 
-**Selecione o novo primário:**
+**Select new primary:**
 - Dropdown: `vps-2`
 - Click: "Switch Primary"
 
-**O que acontece:**
-1. ✅ vps-2 vira **Master**
-2. ✅ vps-1 vira **Slave**
-3. ✅ DNS aponta para vps-2
-4. ✅ Apps redirecionam automaticamente (~30s downtime)
+**What happens:**
+1. ✅ vps-2 becomes **Master**
+2. ✅ vps-1 becomes **Slave**
+3. ✅ DNS points to vps-2
+4. ✅ Apps redirect automatically (~30s downtime)
 
 ---
 
-## 5. Aplicações Replicadas
+## 5. Replicated Applications
 
 ```
-Dashboard → [Projeto] → Applications → Add Application
+Dashboard → [Project] → Applications → Add Application
 ```
 
 **Setup:**
@@ -95,20 +95,20 @@ Dashboard → [Projeto] → Applications → Add Application
 - **Framework**: Node.js / Python / etc
 - **Execution Mode**: ⭕ **Replicated**
 
-**Selecione Servidores:**
-- ✅ vps-1 (Primário)
-- ✅ vps-2 (Secundário)
+**Select Servers:**
+- ✅ vps-1 (Primary)
+- ✅ vps-2 (Secondary)
 
-**Resultado:**
-- App roda em ambos os nós
-- Load balancer distribui requisições
-- Se vps-1 cair, vps-2 continua servindo
+**Result:**
+- App runs on both nodes
+- Load balancer distributes requests
+- If vps-1 fails, vps-2 continues serving
 
 ---
 
-## 6. Tipos de Serviços Suportados
+## 6. Supported Service Types
 
-| Tipo | Replicação | Status |
+| Type | Replication | Status |
 |------|-----------|--------|
 | **PostgreSQL** | Master-Slave (WAL) | ✅ Implemented |
 | **MySQL** | Master-Slave (CHANGE MASTER) | ✅ Implemented |
@@ -120,9 +120,9 @@ Dashboard → [Projeto] → Applications → Add Application
 
 ---
 
-## 7. Verificação Rápida
+## 7. Quick Verification
 
-**Via SSH no servidor primário:**
+**Via SSH on primary server:**
 
 ```bash
 # PostgreSQL
@@ -135,7 +135,7 @@ mysql -e "SHOW SLAVE STATUS\G"
 redis-cli INFO replication
 ```
 
-**Via CLI Dokploy (futuro):**
+**Via Dokploy CLI (future):**
 ```bash
 dokploy cluster status
 dokploy cluster failover --to vps-2
@@ -143,33 +143,33 @@ dokploy cluster failover --to vps-2
 
 ---
 
-## ⚠️ Limitações Atuais
+## ⚠️ Current Limitations
 
-- ❌ Volumes/Storage não replicam (apenas dados)
-- ❌ Failover é manual (não automático)
-- ❌ Sem health checks automáticos
-
----
-
-## 🎯 Workflow Típico
-
-```
-1. Criar 3 VPS com SSH configurado
-   ↓
-2. Adicionar em Settings → Servers (1 primário)
-   ↓
-3. Criar banco de dados com "Replicated" mode
-   ↓
-4. Monitorar sync em Dashboard → Cluster
-   ↓
-5. Quando pronto, fazer failover com "Switch Primary"
-```
+- ❌ Volumes/Storage don't replicate (data only)
+- ❌ Failover is manual (not automatic)
+- ❌ No automatic health checks
 
 ---
 
-## 📞 Suporte
+## 🎯 Typical Workflow
 
-**Erro de replicação?**
-- Verificar conectividade SSH: `ssh root@vps-ip`
-- Ver logs: `Dashboard → Logs → [servidor]`
-- Testar firewall: `telnet vps-ip 5432` (PostgreSQL)
+```
+1. Create 3 VPS with SSH configured
+   ↓
+2. Add in Settings → Servers (1 primary)
+   ↓
+3. Create database with "Replicated" mode
+   ↓
+4. Monitor sync in Dashboard → Cluster
+   ↓
+5. When ready, perform failover with "Switch Primary"
+```
+
+---
+
+## 📞 Support
+
+**Replication error?**
+- Check SSH connectivity: `ssh root@vps-ip`
+- View logs: `Dashboard → Logs → [server]`
+- Test firewall: `telnet vps-ip 5432` (PostgreSQL)
