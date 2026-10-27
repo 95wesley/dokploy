@@ -657,33 +657,5 @@ export const serverRouter = createTRPCRouter({
 			} catch (error) {
 				throw error;
 			}
-	detectTailscaleIp: withPermission("server", "read")
-		.input(z.object({ serverId: z.string() }))
-		.mutation(async ({ input, ctx }) => {
-			try {
-				const currentServer = await findServerById(input.serverId);
-				if (currentServer.organizationId !== ctx.session.activeOrganizationId) {
-					throw new TRPCError({
-						code: "UNAUTHORIZED",
-						message: "You are not authorized to access this server",
-					});
-				}
-				const { detectAndSaveTailscaleIp } = await import("@dokploy/server/services/server");
-				const tailscaleIp = await detectAndSaveTailscaleIp(
-					input.serverId,
-					(msg) => console.log(`[Tailscale] ${msg}`),
-				);
-				await audit(ctx, {
-					action: "update",
-					resourceType: "server",
-					resourceId: input.serverId,
-					resourceName: `Detect Tailscale IP: ${tailscaleIp || "not found"}`,
-				});
-				return { tailscaleIp, success: !!tailscaleIp };
-			} catch (error) {
-				throw error;
-			}
-		}),
-
 		}),
 });

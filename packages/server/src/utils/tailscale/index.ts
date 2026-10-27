@@ -1,5 +1,8 @@
 import { execAsyncRemote } from "@dokploy/server/utils/process/execAsync";
 
+const TAILSCALE_IP_PREFIX = "100.";
+const TAILSCALE_IP_REGEX = /^100\.\d+\.\d+\.\d+$/;
+
 export async function detectTailscaleIp(
 	serverId: string,
 	onData?: (msg: string) => void,
@@ -13,16 +16,27 @@ export async function detectTailscaleIp(
 			onData,
 		);
 
-		const ip = (typeof output === "string" ? output : output?.stdout || "").trim();
-		if (ip && ip.startsWith("100.")) {
-			onData?.(`Found Tailscale IP: ${ip} ✅`);
+		const ip = (typeof output === "string" ? output : output?.stdout || "")
+			.trim()
+			.split("\n")[0];
+
+		if (ip && TAILSCALE_IP_REGEX.test(ip)) {
+			onData?.(`✅ Found Tailscale IP: ${ip}`);
 			return ip;
 		}
 
-		onData?.(`Tailscale not connected or not found`);
+		if (!ip) {
+			onData?.(
+				`⚠️  Tailscale not connected. Authenticate with: tailscale up --hostname=dokploy-\$RANDOM`,
+			);
+		} else {
+			onData?.(`⚠️  Invalid Tailscale IP format: ${ip}`);
+		}
 		return null;
 	} catch (error) {
-		onData?.(`Error detecting Tailscale IP: ${error}`);
+		const errorMessage =
+			error instanceof Error ? error.message : String(error);
+		onData?.(`❌ Error detecting Tailscale IP: ${errorMessage}`);
 		return null;
 	}
 }
@@ -32,43 +46,67 @@ export async function isTailscaleInstalled(
 	onData?: (msg: string) => void,
 ): Promise<boolean> {
 	try {
-		await execAsyncRemote(serverId, "command -v tailscale", onData);
+		await execAsyncRemote(serverId, "command -v tailscale >/dev/null 2>&1", onData);
 		return true;
-	} catch {
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : String(error);
+		if (!errorMessage.includes("command not found")) {
+			onData?.(
+				`⚠️  Unexpected error checking Tailscale: ${errorMessage}`,
+			);
+		}
 		return false;
 	}
+}
+
+export interface TailscaleStatus {
+	installed: boolean;
+	connected: boolean;
+	ip?: string;
+	error?: string;
 }
 
 export async function getTailscaleStatus(
 	serverId: string,
 	onData?: (msg: string) => void,
-): Promise<{
-	installed: boolean;
-	connected: boolean;
-	ip?: string;
-}> {
-	const installed = await isTailscaleInstalled(serverId, onData);
+): Promise<TailscaleStatus> {
+	try {
+		const installed = await isTailscaleInstalled(serverId, onData);
 
-	if (!installed) {
-		return { installed: false, connected: false };
+		if (!installed) {
+			return {
+				installed: false,
+				connected: false,
+				error: "Tailscale not installed",
+			};
+		}
+
+		const ip = await detectTailscaleIp(serverId, onData);
+
+		return {
+			installed: true,
+			connected: !!ip,
+			ip: ip || undefined,
+		};
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : String(error);
+		return {
+			installed: false,
+			connected: false,
+			error: errorMessage,
+		};
 	}
-
-	const ip = await detectTailscaleIp(serverId, onData);
-
-	return {
-		installed: true,
-		connected: !!ip,
-		ip: ip || undefined,
-	};
 }
 
 export async function useSwarmAdvertiseAddr(
 	serverId: string,
-	useTailscale = true,
+	preferTailscale = true,
 	onData?: (msg: string) => void,
 ): Promise<string | null> {
-	if (!useTailscale) {
-		onData?.(`Using public IP for Swarm advertise address`);
+	if (!preferTailscale) {
+		onData?.(`ℹ️  Using public IP for Docker Swarm advertise address`);
 		return null;
 	}
 
@@ -76,13 +114,13 @@ export async function useSwarmAdvertiseAddr(
 
 	if (tailscaleIp) {
 		onData?.(
-			`Using Tailscale IP ${tailscaleIp} for Swarm advertise address`,
+			`ℹ️  Using Tailscale private IP ${tailscaleIp} for Docker Swarm advertise address`,
 		);
 		return tailscaleIp;
 	}
 
 	onData?.(
-		`Tailscale not available, falling back to public IP`,
+		`ℹ️  Tailscale not available, Docker Swarm will use public IP`,
 	);
 	return null;
 }
