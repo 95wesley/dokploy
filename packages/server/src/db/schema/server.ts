@@ -57,6 +57,8 @@ export const server = pgTable("server", {
 	sshKeyId: text("sshKeyId").references(() => sshKeys.sshKeyId, {
 		onDelete: "set null",
 	}),
+	tailscaleIp: text("tailscaleIp"),
+	isPrimary: boolean("isPrimary").notNull().default(false),
 	metricsConfig: jsonb("metricsConfig")
 		.$type<{
 			server: {

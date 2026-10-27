@@ -1,0 +1,25 @@
+{
+	"version": "7",
+	"dialect": "postgresql",
+	"id": "9a8b7c6d-5e4f-3g2h-1i0j-9k8l7m6n5o4p",
+	"prevId": "0198_nostalgic_mongoose",
+	"tables": {},
+	"enums": {
+		"public.serviceType": {
+			"name": "serviceType",
+			"schema": "public",
+			"values": ["application", "compose", "postgres", "mysql", "mariadb", "mongo", "redis", "libsql"]
+		},
+		"public.replicationStatus": {
+			"name": "replicationStatus",
+			"schema": "public",
+			"values": ["synced", "syncing", "error", "pending"]
+		}
+	},
+	"schemas": {},
+	"_meta": {
+		"schemas": {},
+		"tables": {},
+		"columns": {}
+	}
+}
